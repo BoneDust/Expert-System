@@ -13,7 +13,7 @@ public class rule_manipulation {
     public static boolean is_operator(char operator)
     {
         if (operator == '!' || operator == '+' || operator == '|' || operator == '^')
-            return true;
+            return false;
         return false;
     }
 
