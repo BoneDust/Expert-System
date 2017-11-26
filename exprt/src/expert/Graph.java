@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 public class Graph {
 
-    private ArrayList<Fact> all_facts;
-    private ArrayList<Rule> all_rules;
+    private static ArrayList<Fact> all_facts;
+    private static ArrayList<Rule> all_rules;
     private ArrayList<Fact> facts_to_determine;
 
     public void add_new_fact_to_graph(Fact node)
@@ -18,7 +18,7 @@ public class Graph {
         all_rules.add(rule);
     }
 
-    public Fact get_fact_from_graph(char letter)
+    public static Fact get_fact_from_graph(char letter)
     {
         for (Fact fact : all_facts)
         {
@@ -89,6 +89,16 @@ public class Graph {
                     fact.determine_value();
             }
         }
+    }
+
+    public static ArrayList<Fact> get_all_facts()
+    {
+        return  all_facts;
+    }
+
+    public static ArrayList<Rule> get_all_rules()
+    {
+        return  all_rules;
     }
 }
 
