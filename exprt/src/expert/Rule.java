@@ -12,11 +12,12 @@ public class Rule {
     ArrayList<Fact> lhs_facts;
 
 
-    private Fact process_fact(char fact_letter, Fact new_fact, ArrayList<Fact> list_of_facts)
+    private Fact process_fact(char fact_letter, ArrayList<Fact> list_of_facts)
     {
+        Fact new_fact;
         if (Character.isAlphabetic(fact_letter) && Character.isUpperCase(fact_letter) && Graph.get_fact_from_graph(fact_letter) == null)
         {
-            new_fact = new Fact(fact_letter)
+            new_fact = new Fact(fact_letter);
             Graph.get_all_facts().add(new_fact);
         }
         else
@@ -33,7 +34,7 @@ public class Rule {
 
     private void get_rhs_facts()
     {
-        Fact new_fact = null;
+        Fact new_fact;
         for (char c : rhs.toCharArray()) {
             if (is_char_valid(c) == false)
             {
@@ -41,7 +42,7 @@ public class Rule {
                 System.exit(0);
             }
             else
-                new_fact = process_fact(c, new_fact, rhs_facts);
+                new_fact = process_fact(c, rhs_facts);
         }
         if (rhs_facts.size() == 0)
         {
@@ -60,8 +61,11 @@ public class Rule {
                 System.exit(0);
             }
             else
-                new_fact = process_fact(c, new_fact, lhs_facts);
+                new_fact = process_fact(c, lhs_facts);
             if (Graph.get_fact_from_graph(c) != null)
+            {
+                //to-do
+            }
         }
         if (lhs_facts.size() == 0)
         {
@@ -85,36 +89,65 @@ public class Rule {
             return false;
     }
 
+    private boolean is_fact_letter(char c)
+    {
+        if (Character.isAlphabetic(c) == true && Character.isUpperCase(c) == true)
+            return true;
+        else
+            return false;
+    }
+
     private boolean is_char_valid(char c)
     {
-        if (is_bracket(c) == false && is_operator(c) == false && c != ' ' && (Character.isAlphabetic(c) == false || Character.isUpperCase(c) == false))
+        if (is_bracket(c) == false && is_operator(c) == false && c != ' ' && is_fact_letter(c) == false)
             return false;
         else
             return true;
     }
 
-    public static Stack<Character> to_postfix(String rule)
+    private Stack<Character> to_postfix(String rule)
     {
         Stack<Character> postfix  = new Stack<>();
         Stack<Character> holder = new Stack<>();
-        for (int i = 0; i < rule.length(); i++)
+
+        int count_facts = 0, count_ops = 0;
+        for (char c : rule.toCharArray())
         {
-            if (is_fact(rule.charAt(i)))
+            if (is_char_valid(c) == false)
             {
-                postfix.push(rule.charAt(i));
-                if(!holder.empty())
-                    postfix.push(holder.pop());
+                System.out.println("Invalid character encountered in one of the rules.");
+                System.exit(0);
             }
-            else if (is_operator(rule.charAt(i)) || rule.charAt(i) == '(')
-                holder.push(rule.charAt(i));
-            else if (rule.charAt(i) == ')')
+            else if (is_fact_letter(c))
             {
-                while (!holder.empty() && holder.peek() != '(')
-                    postfix.push(holder.pop());
-                if (holder.peek() == '(')
-                    holder.pop();
+                count_facts++;
+                holder.push(c);
+                if(!postfix.empty() && postfix.peek() != '(')
+                    holder.push(postfix.pop());
+            }
+            else if (is_operator(c) || c == '(')
+            {
+                postfix.push(c);
+                if (c != '!')
+                    count_ops++;
+            }
+            else if (c == ')')
+            {
+                while (!postfix.empty() && postfix.peek() != '(')
+                    holder.push(postfix.pop());
+                if (postfix.peek() == '(')
+                    postfix.pop();
             }
         }
+        if (postfix.peek() == '!')
+            holder.push(postfix.pop());
+        if  (postfix.empty() == false || count_ops + 1 != count_facts)
+        {
+            System.out.println("Invalid rule detected.");
+            System.exit(0);
+        }
+        while(holder.empty() == false)
+            postfix.push(holder.pop());
         return postfix;
     }
 
