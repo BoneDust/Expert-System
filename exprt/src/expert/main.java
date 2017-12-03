@@ -7,6 +7,6 @@ public class main {
         System.out.println("whpopovhvjvjhvjhvoops");
         Fact fact = new Fact('A');
         boolean  temp = fact.is_determined();
-        System.out.println(fact.value);
+        System.out.println(fact.get_value());
     }
 }

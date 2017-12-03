@@ -30,14 +30,14 @@ public class Graph {
 
     public void set_facts_to_be_determined(String line)
     {
-        String temp = line.split("[?]")[1];
+        String temp = line.trim().split("[?]")[1];
         for (char c : temp.toCharArray())
         {
-            if (Character.isAlphabetic(c) && get_fact_from_graph(c) != null && facts_to_determine.contains(c) == false)
+            if (utils.is_fact_letter(c) && get_fact_from_graph(c) != null && facts_to_determine.contains(c) == false)
                 facts_to_determine.add(get_fact_from_graph(c));
             if (get_fact_from_graph(c) == null)
             {
-                System.out.println("Fact " + c + " is not found.");
+                System.out.println("Fact '" + c + "' is not found.");
                 System.exit(0);
             }
         }
@@ -45,22 +45,22 @@ public class Graph {
 
     public void set_initial_values(String line)
     {
-        String temp = line.split("=")[1];
+        String temp = line.trim().split("=")[1];
         for (char c : temp.toCharArray())
         {
-            if (Character.isAlphabetic(c) && get_fact_from_graph(c) != null) {
+            if (utils.is_fact_letter(c) && get_fact_from_graph(c) != null) {
                 get_fact_from_graph(c).set_value(true);
                 get_fact_from_graph(c).set_determined(true);
             }
             if (get_fact_from_graph(c) == null)
             {
-                System.out.println("Fact " + c + " is not found.");
+                System.out.println("Fact '" + c + ", is not found.");
                 System.exit(0);
             }
         }
     }
 
-    private boolean are_facts_determined()
+   /*private boolean are_facts_determined()
     {
         int count = 0;
         for (Fact fact : facts_to_determine)
@@ -74,9 +74,23 @@ public class Graph {
             return false;
     }
 
+    private boolean are_all_rules_evaluated()
+    {
+        int count = 0;
+        for (Rule rule : all_rules)
+        {
+            if (rule.is_evaluated() == true)
+                count++;
+        }
+        if (count == all_rules.size())
+            return true;
+        else
+            return false;
+    }
+    */
     public void determine_facts()
     {
-        while (are_facts_determined() == false)
+        while (are_facts_determined() == false && are_all_rules_evaluated())
         {
             for (Fact fact : facts_to_determine)
             {

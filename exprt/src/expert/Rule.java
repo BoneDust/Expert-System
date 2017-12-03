@@ -4,18 +4,20 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 public class Rule {
+
     private String rhs;
     private String lhs;
-    private Stack<Character> postfix_rhs;
     private boolean value;
-    ArrayList<Fact> rhs_facts;
-    ArrayList<Fact> lhs_facts;
+    private boolean evaluated;
+    private Stack<Character> postfix_lhs;
+    private ArrayList<Fact> rhs_facts;
+    private ArrayList<Fact> lhs_facts;
 
 
     private Fact process_fact(char fact_letter, ArrayList<Fact> list_of_facts)
     {
         Fact new_fact;
-        if (Character.isAlphabetic(fact_letter) && Character.isUpperCase(fact_letter) && Graph.get_fact_from_graph(fact_letter) == null)
+        if (utils.is_fact_letter(fact_letter) && Graph.get_fact_from_graph(fact_letter) == null)
         {
             new_fact = new Fact(fact_letter);
             Graph.get_all_facts().add(new_fact);
@@ -26,134 +28,129 @@ public class Rule {
             list_of_facts.add(new_fact);
         else if (new_fact == null)
         {
-            System.out.println("Fact " + fact_letter + " is not found.");
+            System.out.println("Fact '" + fact_letter + "' is not found.");
             System.exit(0);
         }
         return new_fact;
     }
 
-    private void get_rhs_facts()
-    {
-        Fact new_fact;
-        for (char c : rhs.toCharArray()) {
-            if (is_char_valid(c) == false)
-            {
-                System.out.println("Invalid character found on right-hand side of a rule.");
-                System.exit(0);
-            }
-            else
-                new_fact = process_fact(c, rhs_facts);
-        }
-        if (rhs_facts.size() == 0)
-        {
-            System.out.println("There exists a rule that contains no facts on its right-hand side.");
-            System.exit(0);
-        }
-    }
-
     private void get_lhs_facts()
     {
         Fact new_fact = null;
-        for (char c : lhs.toCharArray()) {
-            if (is_char_valid(c) == false)
-            {
-                System.out.println("Invalid character found on left-hand side of a rule.");
-                System.exit(0);
-            }
+        for (char c : lhs.toCharArray())
+        {
+            if (utils.is_char_valid(c) == false)
+                utils.error_exit("Invalid character found on left-hand side of a rule.");
             else
                 new_fact = process_fact(c, lhs_facts);
-            if (Graph.get_fact_from_graph(c) != null)
-            {
-                //to-do
-            }
         }
         if (lhs_facts.size() == 0)
-        {
-            System.out.println("There exists a rule that contains no facts on its left-hand side.");
-            System.exit(0);
+            utils.error_exit("There exists a rule that contains no facts on its left-hand side.");
+    }
+
+    private void get_rhs_facts()
+    {
+        Fact new_fact = null;
+        for (char c : rhs.toCharArray()) {
+            if (utils.is_char_valid(c) == false)
+                utils.error_exit("Invalid character found on right-hand side of a rule.");
+            else
+                new_fact = process_fact(c, rhs_facts);
+            for (Fact fact : lhs_facts)
+            {
+                if (new_fact.getLinked_facts().contains(fact) == false)
+                    new_fact.getLinked_facts().add(fact);
+            }
+            new_fact.getRules_involved_in().add(this);
         }
+        if (rhs_facts.size() == 0)
+            utils.error_exit("There exists a rule that contains no facts on its right-hand side.");
     }
 
-    private boolean is_operator(char operator)
+    private void to_postfix(String rule)
     {
-        if (operator == '!' || operator == '+' || operator == '|' || operator == '^')
-            return false;
-        return false;
-    }
-
-    private boolean is_bracket(char bracket)
-    {
-        if (bracket == '(' || bracket == ')')
-            return true;
-        else
-            return false;
-    }
-
-    private boolean is_fact_letter(char c)
-    {
-        if (Character.isAlphabetic(c) == true && Character.isUpperCase(c) == true)
-            return true;
-        else
-            return false;
-    }
-
-    private boolean is_char_valid(char c)
-    {
-        if (is_bracket(c) == false && is_operator(c) == false && c != ' ' && is_fact_letter(c) == false)
-            return false;
-        else
-            return true;
-    }
-
-    private Stack<Character> to_postfix(String rule)
-    {
-        Stack<Character> postfix  = new Stack<>();
         Stack<Character> holder = new Stack<>();
 
-        int count_facts = 0, count_ops = 0;
         for (char c : rule.toCharArray())
         {
-            if (is_char_valid(c) == false)
-            {
-                System.out.println("Invalid character encountered in one of the rules.");
-                System.exit(0);
-            }
-            else if (is_fact_letter(c))
-            {
-                count_facts++;
+            if (utils.is_char_valid(c) == false)
+               utils.error_exit("Invalid character encountered in one of the rules.");
+            else if (utils.is_fact_letter(c))
                 holder.push(c);
-                if(!postfix.empty() && postfix.peek() != '(')
-                    holder.push(postfix.pop());
-            }
-            else if (is_operator(c) || c == '(')
+            else if (utils.is_operator(c) || c == '(')
             {
-                postfix.push(c);
-                if (c != '!')
-                    count_ops++;
+                while (postfix_lhs.peek() == '!' && c != '(' && c != '!' ) // ! has highest precedence
+                    holder.push(postfix_lhs.pop());
+                while (postfix_lhs.peek() == '+' && c != '(' && c != '+') // followed by +
+                    holder.push(postfix_lhs.pop());
+                while (postfix_lhs.peek() == '^' && c != '(' && c != '^') // then ^
+                    holder.push(postfix_lhs.pop());
+                postfix_lhs.push(c);
             }
             else if (c == ')')
             {
-                while (!postfix.empty() && postfix.peek() != '(')
-                    holder.push(postfix.pop());
-                if (postfix.peek() == '(')
-                    postfix.pop();
+                while (!postfix_lhs.empty() && postfix_lhs.peek() != '(')
+                    holder.push(postfix_lhs.pop());
+                if (postfix_lhs.peek() == '(')
+                    postfix_lhs.pop();
             }
         }
-        if (postfix.peek() == '!')
-            holder.push(postfix.pop());
-        if  (postfix.empty() == false || count_ops + 1 != count_facts)
-        {
-            System.out.println("Invalid rule detected.");
-            System.exit(0);
-        }
         while(holder.empty() == false)
-            postfix.push(holder.pop());
-        return postfix;
+            postfix_lhs.push(holder.pop());
     }
 
+    public void evaluate_rule()
+    {
+        Stack<Boolean> result = new Stack<>();
+        char item;
+        Fact fact;
+
+        while(postfix_lhs.empty() == false)
+        {
+            item = postfix_lhs.pop();
+            if (utils.is_fact_letter(item))
+            {
+                fact = Graph.get_fact_from_graph(item);
+                if (fact.is_determined())
+                    result.push(fact.get_value());
+                else
+                {
+                    fact.determine_value();
+                    if (fact.is_determined())
+                        result.push(fact.get_value());
+                    else
+                        return;
+                }
+            }
+            else if (item == '!')
+                utils.perform_not_operation(result);
+            else
+            {
+                if (result.size() < 2)
+                    utils.error_exit("Invalid rule detected.");
+                else
+                    utils.perform_operation(item, result);
+            }
+        }
+        if (result.size() != 1)
+            utils.error_exit("Invalid rule detected.");
+        evaluated = true;
+        value = result.pop();
+    }
+
+    public boolean is_evaluated()
+    {
+        return evaluated;
+    }
     public Rule(String rule)
     {
-        rhs = rule.split("=>")[0];
-        lhs = rule.split("=>")[1];
+        lhs = rule.trim().split("=>")[0].trim();
+        rhs = rule.trim().split("=>")[1].trim();
+        value = false;
+        evaluated = false;
+        postfix_lhs = new Stack<>();
+        rhs_facts = new ArrayList<>();
+        lhs_facts = new ArrayList<>();
+        to_postfix(rhs);
     }
 }

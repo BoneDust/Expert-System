@@ -3,7 +3,7 @@ package expert;
 import java.util.ArrayList;
 
 public class Fact {
-    public  boolean value;
+    private  boolean value;
     private  boolean printed;
     private  char letter;
     private  boolean determined;
@@ -33,7 +33,20 @@ public class Fact {
 
     public void determine_value()
     {
+        boolean propsed_value;
 
+        for (Rule rule : rules_involved_in)
+        {
+            if (rule.is_evaluated() == false)
+                rule.evaluate_rule();
+        }
+        for (Rule rule : rules_involved_in)
+        {
+            if (rule.is_evaluated() == true)
+            {
+                //To-Do need to finish this
+            }
+        }
     }
 
     public char get_letter()
@@ -69,6 +82,14 @@ public class Fact {
     public void set_determined(boolean determined)
     {
         this.determined = determined;
+    }
+
+    public ArrayList<Fact> getLinked_facts() {
+        return linked_facts;
+    }
+
+    public ArrayList<Rule> getRules_involved_in() {
+        return rules_involved_in;
     }
 }
 
